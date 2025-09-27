@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cypress Commands Table</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d4aa 0%, #4ade80 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .queries { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .actions { background: linear-gradient(135deg, #10b981, #059669); }
+        .assertions { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .utilities { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .apis { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 8px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .element {
+            aspect-ratio: 1;
+            min-height: 70px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px;
+        }
+
+        .element:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .element::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            opacity: 0.8;
+            z-index: 1;
+        }
+
+        .element-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .element-number {
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0.8;
+            margin-bottom: 2px;
+        }
+
+        .element-symbol {
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-bottom: 1px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .element-name {
+            font-size: 0.5rem;
+            opacity: 0.9;
+            text-transform: lowercase;
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .empty {
+            background: transparent !important;
+            border: none !important;
+            cursor: default;
+        }
+
+        .empty:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #00d4aa;
+        }
+
+        .modal p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .syntax-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #00d4aa;
+            white-space: pre-line;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 1200px) {
+            .periodic-table {
+                grid-template-columns: repeat(8, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .periodic-table {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+            }
+            
+            .element {
+                min-height: 60px;
+            }
+            
+            .element-symbol {
+                font-size: 0.6rem;
+            }
+            
+            .element-name {
+                font-size: 0.45rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Cypress Commands Table</h1>
+        <p style="font-size: 1rem; opacity: 0.8; margin-bottom: 20px;">YouTube - ABAutomationHub</p>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color queries"></div>
+                <span>Queries</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color actions"></div>
+                <span>Actions</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color assertions"></div>
+                <span>Assertions</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color utilities"></div>
+                <span>Utilities</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color apis"></div>
+                <span>APIs</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="periodic-table" id="periodicTable">
+        <!-- Elements will be generated by JavaScript -->
+    </div>
+
+    <div id="commandModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle"></h2>
+            <p id="modalDescription"></p>
+            <div id="modalSyntax" class="syntax-block"></div>
+            <p id="modalExample"></p>
+        </div>
+    </div>
+
+    <script>
+        const commands = [
+            // Queries (Blue theme) - Numbers 1-18
+            { symbol: 'get', name: 'get', type: 'queries', number: 1, description: 'Get DOM elements by selector or alias', syntax: 'cy.get(selector)\ncy.get(alias)', example: 'cy.get(\'.my-class\')\ncy.get(\'@myAlias\')' },
+            { symbol: 'find', name: 'find', type: 'queries', number: 2, description: 'Get descendant DOM elements (must be chained)', syntax: '.find(selector)\n.find(selector, options)', example: 'cy.get(\'.article\').find(\'footer\')\n// ❌ cy.find(\'.progress\') - Cannot chain off cy' },
+            { symbol: 'contains', name: 'contains', type: 'queries', number: 3, description: 'Get DOM element containing specific text', syntax: 'cy.contains(text)\n.contains(text)', example: 'cy.contains(\'Submit\')\ncy.get(\'form\').contains(\'Login\')' },
+            { symbol: 'as', name: 'as', type: 'queries', number: 4, description: 'Assign an alias for later use', syntax: '.as(aliasName)', example: 'cy.get(\'button\').as(\'submitBtn\')' },
+            { symbol: 'children', name: 'children', type: 'queries', number: 5, description: 'Get children of DOM elements', syntax: '.children()\n.children(selector)', example: 'cy.get(\'ul\').children()\ncy.get(\'nav\').children(\'.active\')' },
+            { symbol: 'parent', name: 'parent', type: 'queries', number: 6, description: 'Get parent DOM element', syntax: '.parent()\n.parent(selector)', example: 'cy.get(\'input\').parent()\ncy.get(\'li\').parent(\'ul\')' },
+            { symbol: 'first', name: 'first', type: 'queries', number: 7, description: 'Get the first element', syntax: '.first()', example: 'cy.get(\'li\').first()\ncy.get(\'option\').first()' },
+            { symbol: 'last', name: 'last', type: 'queries', number: 8, description: 'Get the last element', syntax: '.last()', example: 'cy.get(\'li\').last()\ncy.get(\'.item\').last()' },
+            { symbol: 'eq', name: 'eq', type: 'queries', number: 9, description: 'Get element at specific index', syntax: '.eq(index)', example: 'cy.get(\'li\').eq(2)\ncy.get(\'.card\').eq(0)' },
+            { symbol: 'filter', name: 'filter', type: 'queries', number: 10, description: 'Filter elements by selector', syntax: '.filter(selector)', example: 'cy.get(\'li\').filter(\'.active\')\ncy.get(\'input\').filter(\'[required]\')' },
+            { symbol: 'not', name: 'not', type: 'queries', number: 11, description: 'Filter out elements', syntax: '.not(selector)', example: 'cy.get(\'li\').not(\'.disabled\')\ncy.get(\'button\').not(\'.hidden\')' },
+            { symbol: 'closest', name: 'closest', type: 'queries', number: 12, description: 'Get closest ancestor element', syntax: '.closest(selector)', example: 'cy.get(\'input\').closest(\'form\')\ncy.get(\'td\').closest(\'table\')' },
+            { symbol: 'next', name: 'next', type: 'queries', number: 13, description: 'Get next sibling element', syntax: '.next()\n.next(selector)', example: 'cy.get(\'h1\').next()\ncy.get(\'label\').next(\'input\')' },
+            { symbol: 'prev', name: 'prev', type: 'queries', number: 14, description: 'Get previous sibling element', syntax: '.prev()\n.prev(selector)', example: 'cy.get(\'input\').prev()\ncy.get(\'button\').prev(\'label\')' },
+            { symbol: 'siblings', name: 'siblings', type: 'queries', number: 15, description: 'Get sibling elements', syntax: '.siblings()\n.siblings(selector)', example: 'cy.get(\'li\').siblings()\ncy.get(\'.active\').siblings(\'.item\')' },
+            { symbol: 'window', name: 'window', type: 'queries', number: 16, description: 'Get window object', syntax: 'cy.window()', example: 'cy.window().then(win => { ... })' },
+            { symbol: 'document', name: 'document', type: 'queries', number: 17, description: 'Get document object', syntax: 'cy.document()', example: 'cy.document().its(\'contentType\').should(\'eq\', \'text/html\')' },
+            { symbol: 'title', name: 'title', type: 'queries', number: 18, description: 'Get document title', syntax: 'cy.title()', example: 'cy.title().should(\'contain\', \'My App\')\ncy.title().should(\'eq\', \'Home Page\')' },
+
+            // Actions (Green theme) - Numbers 19-32
+            { symbol: 'click', name: 'click', type: 'actions', number: 19, description: 'Click on DOM element', syntax: '.click()\n.click(position)', example: 'cy.get(\'button\').click()\ncy.get(\'.card\').click(\'topRight\')' },
+            { symbol: 'type', name: 'type', type: 'actions', number: 20, description: 'Type into DOM element (must be chained)', syntax: '.type(text)\n.type(text, options)', example: 'cy.get(\'input\').type(\'Hello World\')\ncy.get(\'[type=email]\').type(\'user@test.com\')' },
+            { symbol: 'clear', name: 'clear', type: 'actions', number: 21, description: 'Clear input or textarea', syntax: '.clear()', example: 'cy.get(\'input\').clear()\ncy.get(\'textarea\').clear()' },
+            { symbol: 'check', name: 'check', type: 'actions', number: 22, description: 'Check checkbox or radio', syntax: '.check()\n.check(value)', example: 'cy.get(\'[type="checkbox"]\').check()' },
+            { symbol: 'uncheck', name: 'uncheck', type: 'actions', number: 23, description: 'Uncheck checkbox', syntax: '.uncheck()', example: 'cy.get(\'[type="checkbox"]\').uncheck()\ncy.get(\'.checkbox\').uncheck()' },
+            { symbol: 'select', name: 'select', type: 'actions', number: 24, description: 'Select option from select element', syntax: '.select(value)', example: 'cy.get(\'select\').select(\'option1\')' },
+            { symbol: 'dblclick', name: 'dblclick', type: 'actions', number: 25, description: 'Double click on element', syntax: '.dblclick()\n.dblclick(position)', example: 'cy.get(\'button\').dblclick()' },
+            { symbol: 'rightclick', name: 'rightclick', type: 'actions', number: 26, description: 'Right click on element', syntax: '.rightclick()\n.rightclick(position)', example: 'cy.get(\'.item\').rightclick()\ncy.get(\'.menu\').rightclick(\'center\')' },
+            { symbol: 'submit', name: 'submit', type: 'actions', number: 27, description: 'Submit a form', syntax: '.submit()', example: 'cy.get(\'form\').submit()\ncy.get(\'#loginForm\').submit()' },
+            { symbol: 'focus', name: 'focus', type: 'actions', number: 28, description: 'Focus on element', syntax: '.focus()', example: 'cy.get(\'input\').focus()' },
+            { symbol: 'blur', name: 'blur', type: 'actions', number: 29, description: 'Remove focus from element', syntax: '.blur()', example: 'cy.get(\'[name="comment"]\').blur()' },
+            { symbol: 'trigger', name: 'trigger', type: 'actions', number: 30, description: 'Trigger event on element', syntax: '.trigger(eventName)\n.trigger(eventName, options)', example: 'cy.get(\'button\').trigger(\'mouseover\')' },
+            { symbol: 'scrollTo', name: 'scrollTo', type: 'actions', number: 31, description: 'Scroll to position', syntax: 'cy.scrollTo(position)\n.scrollTo(x, y)', example: 'cy.scrollTo(\'bottom\')\ncy.get(\'.container\').scrollTo(0, 500)' },
+            { symbol: 'scrollIntoView', name: 'scrollIntoView', type: 'actions', number: 32, description: 'Scroll element into view', syntax: '.scrollIntoView()\n.scrollIntoView(options)', example: 'cy.get(\'#footer\').scrollIntoView()\ncy.get(\'.hidden-element\').scrollIntoView()' },
+
+            // Assertions (Orange theme) - Numbers 33-34
+            { symbol: 'should', name: 'should', type: 'assertions', number: 33, description: 'Create assertion', syntax: '.should(chainers)\n.should(callback)', example: 'cy.get(\'input\').should(\'be.visible\')\ncy.contains(\'Login\').should(\'be.visible\') // Assert that el is visible' },
+            { symbol: 'and', name: 'and', type: 'assertions', number: 34, description: 'Chain multiple assertions', syntax: '.and(chainers)', example: 'cy.get(\'nav\')\n  .should(\'be.visible\')\n  .and(\'have.class\', \'open\')' },
+
+            // Utilities (Purple theme) - Numbers 35-55
+            { symbol: 'wait', name: 'wait', type: 'utilities', number: 35, description: 'Wait for time or alias', syntax: 'cy.wait(time)\ncy.wait(alias)', example: 'cy.wait(1000)\ncy.wait(\'@apiCall\')' },
+            { symbol: 'visit', name: 'visit', type: 'utilities', number: 36, description: 'Visit a URL', syntax: 'cy.visit(url)\ncy.visit(url, options)', example: 'cy.visit(\'https://www.youtube.com/@ABAutomationHub\')\ncy.visit(\'/login\')' },
+            { symbol: 'reload', name: 'reload', type: 'utilities', number: 37, description: 'Reload the page', syntax: 'cy.reload()\ncy.reload(forceReload)', example: 'cy.reload()\ncy.reload(true)' },
+            { symbol: 'go', name: 'go', type: 'utilities', number: 38, description: 'Navigate browser history', syntax: 'cy.go(direction)\ncy.go(direction, options)', example: 'cy.go(\'back\')\ncy.go(\'forward\')\ncy.go(-1)' },
+            { symbol: 'intercept', name: 'intercept', type: 'utilities', number: 39, description: 'Intercept network requests', syntax: 'cy.intercept(method, url)\ncy.intercept(routeMatcher, routeHandler)', example: 'cy.intercept(\'GET\', \'/api/*\').as(\'api\')\ncy.intercept(\'/users.json\', { fixture: \'users.json\' })' },
+            { symbol: 'fixture', name: 'fixture', type: 'utilities', number: 40, description: 'Load fixture data', syntax: 'cy.fixture(filePath)\ncy.fixture(filePath, encoding)', example: 'cy.fixture(\'users.json\')\ncy.fixture(\'example.json\').as(\'userData\')' },
+            { symbol: 'request', name: 'request', type: 'utilities', number: 41, description: 'Make HTTP request', syntax: 'cy.request(url)\ncy.request(method, url)\ncy.request(options)', example: 'cy.request(\'/api/users\')\ncy.request(\'POST\', \'/api/login\', { username: \'admin\' })' },
+            { symbol: 'task', name: 'task', type: 'utilities', number: 42, description: 'Execute task in Node', syntax: 'cy.task(event)\ncy.task(event, arg)', example: 'cy.task(\'hello\', { greeting: \'Hello\', name: \'World\' })' },
+            { symbol: 'wrap', name: 'wrap', type: 'utilities', number: 43, description: 'Wrap object to use with cy commands', syntax: 'cy.wrap(object)', example: 'cy.wrap($form).should(\'have.class\', \'form-container\')' },
+            { symbol: 'then', name: 'then', type: 'utilities', number: 44, description: 'Work with yielded subject', syntax: '.then(callback)', example: 'cy.get(\'input\').then($el => { ... })' },
+            { symbol: 'within', name: 'within', type: 'utilities', number: 45, description: 'Scope commands to element', syntax: '.within(callback)', example: 'cy.get(\'.query-form\').within((el) => {\n  cy.get(\'input:first\')\n})' },
+            { symbol: 'each', name: 'each', type: 'utilities', number: 46, description: 'Iterate over elements', syntax: '.each(callback)', example: 'cy.get(\'ul>li\').each(() => {...})' },
+            { symbol: 'spread', name: 'spread', type: 'utilities', number: 47, description: 'Spread array as arguments', syntax: '.spread(callback)', example: 'cy.getCookies().spread(() => {})' },
+            { symbol: 'its', name: 'its', type: 'utilities', number: 48, description: 'Get property from object', syntax: '.its(propertyName)', example: 'cy.window().its(\'sessionStorage\')' },
+            { symbol: 'invoke', name: 'invoke', type: 'utilities', number: 49, description: 'Invoke method on object', syntax: '.invoke(functionName)\n.invoke(functionName, args)', example: 'cy.get(\'input\').invoke(\'val\')\ncy.wrap({ animate: fn }).invoke(\'animate\')' },
+            { symbol: 'session', name: 'session', type: 'utilities', number: 50, description: 'Cache and restore session', syntax: 'cy.session(id, setup)', example: 'cy.session(\'user1\', () => {\n  cy.visit(\'/login\')\n  cy.get(\'input\').type(\'admin\')\n})' },
+            { symbol: 'viewport', name: 'viewport', type: 'utilities', number: 51, description: 'Set viewport size', syntax: 'cy.viewport(width, height)\ncy.viewport(preset)', example: 'cy.viewport(1280, 720)\ncy.viewport(\'iphone-6\')' },
+            { symbol: 'screenshot', name: 'screenshot', type: 'utilities', number: 52, description: 'Take screenshot', syntax: 'cy.screenshot()\ncy.screenshot(fileName)', example: 'cy.screenshot()\ncy.screenshot(\'login-page\')' },
+            { symbol: 'debug', name: 'debug', type: 'utilities', number: 53, description: 'Debug current subject', syntax: '.debug()', example: 'cy.get(\'input\').debug()' },
+            { symbol: 'pause', name: 'pause', type: 'utilities', number: 54, description: 'Pause test execution', syntax: 'cy.pause()', example: 'cy.pause()\ncy.get(\'nav\').pause()' },
+            { symbol: 'log', name: 'log', type: 'utilities', number: 55, description: 'Print to command log', syntax: 'cy.log(message)', example: 'cy.log(\'Starting test\')\ncy.log(\'User logged in successfully\')' },
+
+            // APIs (Red theme) - Numbers 56-58
+            { symbol: 'Cypress.config', name: 'config', type: 'apis', number: 56, description: 'Get/set configuration', syntax: 'Cypress.config()\nCypress.config(name)\nCypress.config(object)', example: 'Cypress.config(\'baseUrl\')\nCypress.config({\n  defaultCommandTimeout: 10000,\n  viewportHeight: 900,\n})' },
+            { symbol: 'Cypress.env', name: 'env', type: 'apis', number: 57, description: 'Get environment variables', syntax: 'Cypress.env()\nCypress.env(name)\nCypress.env(object)', example: 'Cypress.env(\'host\', \'http://server.dev.local\')\nCypress.env(\'host\') // => http://server.dev.local' },
+            { symbol: 'Cypress.Commands', name: 'Commands', type: 'apis', number: 58, description: 'Add custom commands', syntax: 'Cypress.Commands.add(name, callbackFn)\nCypress.Commands.overwrite(name, callbackFn)', example: 'Cypress.Commands.add(\'login\', (username, password) => {\n  cy.get(\'input[name=username]\').type(username)\n})' }
+        ];
+
+        function createPeriodicTable() {
+            const table = document.getElementById('periodicTable');
+            
+            // Sort commands by number to show them in sequence 1, 2, 3, 4, 5...
+            const sortedCommands = commands.sort((a, b) => a.number - b.number);
+            
+            // Create elements in numerical order
+            sortedCommands.forEach(cmd => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = `element ${cmd.type}`;
+                elementDiv.innerHTML = `
+                    <div class="element-content">
+                        <div class="element-number">${cmd.number}</div>
+                        <div class="element-symbol">${cmd.symbol}</div>
+                        <div class="element-name">${cmd.name}</div>
+                    </div>
+                `;
+                
+                elementDiv.addEventListener('click', () => showModal(cmd));
+                table.appendChild(elementDiv);
+            });
+        }
+
+        function showModal(command) {
+            const modal = document.getElementById('commandModal');
+            const title = document.getElementById('modalTitle');
+            const description = document.getElementById('modalDescription');
+            const syntax = document.getElementById('modalSyntax');
+            const example = document.getElementById('modalExample');
+
+            title.textContent = command.symbol.startsWith('Cypress.') ? command.symbol : `cy.${command.symbol}()`;
+            description.textContent = command.description;
+            syntax.textContent = command.syntax;
+            example.textContent = `Example:\n${command.example}`;
+
+            modal.style.display = 'block';
+        }
+
+        function hideModal() {
+            document.getElementById('commandModal').style.display = 'none';
+        }
+
+        // Event listeners
+        document.querySelector('.close').addEventListener('click', hideModal);
+        window.addEventListener('click', (event) => {
+            if (event.target === document.getElementById('commandModal')) {
+                hideModal();
+            }
+        });
+
+        // Initialize the table
+        createPeriodicTable();
+    </script>
+</body>
+</html>
