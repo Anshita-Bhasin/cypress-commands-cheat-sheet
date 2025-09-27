@@ -7,6 +7,7 @@ cypress-commands-cheat-sheet by ABAutomationHub
 An interactive, visual reference tool for Cypress commands with accurate syntax and real-world examples. Perfect for QA Engineers, Test Automation Developers, and anyone learning Cypress testing framework.
 
 ![Cypress Commands Table](https://img.shields.io/badge/Cypress-Commands-green?style=for-the-badge&logo=cypress)
+![Version](https://img.shields.io/badge/Version-1.0-blue?style=for-the-badge)
 
 ## 🌟 **Live Demo**
 👉 **[Try it now!](https://Anshita-Bhasin.github.io/cypress-commands-cheat-sheet)**
